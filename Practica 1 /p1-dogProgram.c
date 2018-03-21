@@ -16,6 +16,8 @@ struct dogType{
   
 };
 
+const int DOGS = sizeof(struct dogType);
+
 
 int hash(void * ap){
   char * c;
@@ -25,7 +27,7 @@ int hash(void * ap){
     if( c[i] >= 97 )  tmp += c[i] - 32; 
     else tmp += c[i];
   }
-  return (tmp % MIL) * sizeof(struct dogType); 
+  return (tmp % MIL) ; 
 }
 
 
@@ -36,7 +38,7 @@ void ingresar_registro(void * ap, FILE *f){
   int hashkey, numread, hashi;
   
   animal = ap;
-  hashkey = hash(animal -> nombre);
+  hashkey = hash(animal -> nombre) * sizeof(struct dogType);
 
   struct dogType * tmp;
   tmp = malloc(sizeof(struct dogType));
@@ -52,25 +54,37 @@ void ingresar_registro(void * ap, FILE *f){
       hashi = tmp -> next; 
       fseek(f,hashi, SEEK_SET);
     }
-    
-  if( numread == 1 ){
-    printf("%i \n", hashi);
-    fseek(f,0L, SEEK_END);  // busca el proximo espacio libre
-    int pos = ftell(f);
-    tmp -> next = pos;  // le asigna el valor de la pos del byte  a next
-    fwrite(animal, sizeof(struct dogType), 1, f);
-    
-    fseek(f, hashi ,SEEK_SET); // vuelve a la pos del padre
-    fwrite(tmp, sizeof(struct dogType), 1, f);
-    
-  }else {
+
+  printf("numread: %i \n", numread);
+  if( numread == 0 ) {
     printf("entra no");
     fseek(f, hashkey ,SEEK_SET); 
     fwrite(animal, sizeof(struct dogType), 1, f);
   }
+  else
+    {
+      rewind(f);
+      fseek(f, 0L ,SEEK_END);  // busca el proximo espacio libre
+      long  pos = ftell(f);
+      if(pos < DOGS*1000)
+	{
+	  pos = DOGS * 1000; 
+	  fseek(f,pos, SEEK_SET);
+	}
+      printf("%i pos \n", pos);
+      tmp -> next = pos;  // le asigna el valor de la pos del byte  a next
+      fwrite(animal, sizeof(struct dogType), 1, f);
+    
+      fseek(f, hashi ,SEEK_SET); // vuelve a la pos del padre
+      fwrite(tmp, sizeof(struct dogType), 1, f);
+    }
+  
+
 }
 
 void ver_registro (int n_reg){
+
+  
 	/* Validar que el número ingresado exista
          * Guardar el historial de la mascota en un archivo de texto
 	 * y debe abrirse de forma automatica.
@@ -140,9 +154,13 @@ int main (){
   struct dogType dos  = {"Daniel", "kor", 20, "humn", 170, 47, 'M', -1};
    struct dogType tres  = {"jimmy", "kor", 20, "humn", 170, 47, 'M', -1};
 
+   //ingresar_registro(&dos,f);
   ingresar_registro(&uno, f);
-  ingresar_registro(&dos,f);
   ingresar_registro(&tres,f);
+  ingresar_registro(&tres,f);
+  ingresar_registro(&tres,f);
+  ingresar_registro(&dos,f);
+
 }
 
 

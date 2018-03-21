@@ -25,12 +25,12 @@ int hash(void * ap){
     if( c[i] >= 97 )  tmp += c[i] - 32; 
     else tmp += c[i];
   }
-  return tmp % MIL; 
+  return (tmp % MIL) * sizeof(struct dogType); 
 }
 
 
 
-void ingresar_registro(void * ap, FILE * f){
+void ingresar_registro(void * ap, FILE *f){
  
   struct dogType * animal;
   int hashkey, numread, hashi;
@@ -43,6 +43,7 @@ void ingresar_registro(void * ap, FILE * f){
   
   hashi = hashkey;
   fseek(f,hashi, SEEK_SET);
+
   while( numread = fread(tmp, sizeof(struct dogType), 1, f) == 1 )
     {
    
@@ -51,10 +52,9 @@ void ingresar_registro(void * ap, FILE * f){
       hashi = tmp -> next; 
       fseek(f,hashi, SEEK_SET);
     }
-
-  printf(" %i \n", hashi);
     
-  if( tmp != NULL ){    
+  if( numread == 1 ){
+    printf("%i \n", hashi);
     fseek(f,0L, SEEK_END);  // busca el proximo espacio libre
     int pos = ftell(f);
     tmp -> next = pos;  // le asigna el valor de la pos del byte  a next
@@ -64,6 +64,7 @@ void ingresar_registro(void * ap, FILE * f){
     fwrite(tmp, sizeof(struct dogType), 1, f);
     
   }else {
+    printf("entra no");
     fseek(f, hashkey ,SEEK_SET); 
     fwrite(animal, sizeof(struct dogType), 1, f);
   }
@@ -114,6 +115,9 @@ int main (){
 
   int i = hash("jimmy");
   
+  f = fopen("j.dat", "w");
+  fclose(f);
+
   f = fopen("j.dat", "r+");
   
   char n[] = "Jimmy";
@@ -128,15 +132,17 @@ int main (){
   
   fseek(f, 10 ,SEEK_SET);
   int num = fread(j, sizeof(char), 5, f);
-  
-  printf("%s %i" , s, strlen(s));
+
+  //printf("%s %i" , s, strlen(s));
 
   struct dogType uno  = {"jimmy", "kor", 20, "humn", 170, 47, 'M', -1};
 
-  struct dogType dos  = {"Jimmy", "kor", 20, "humn", 170, 47, 'M', -1};
+  struct dogType dos  = {"Daniel", "kor", 20, "humn", 170, 47, 'M', -1};
+   struct dogType tres  = {"jimmy", "kor", 20, "humn", 170, 47, 'M', -1};
 
   ingresar_registro(&uno, f);
   ingresar_registro(&dos,f);
+  ingresar_registro(&tres,f);
 }
 
 
