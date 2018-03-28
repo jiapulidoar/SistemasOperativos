@@ -5,231 +5,352 @@
 const int MIL = 1000; 
 
 struct dogType{
-  char nombre [32];
-  char tipo [32];
-  int edad;
-  char raza [16];
-  int estatura;
-  float peso;
-  char genero;
-  int next;
-  
+    
+    char nombre [32];
+    char tipo [32];
+    int edad;
+    char raza [16];
+    int estatura;
+    float peso;
+    char genero;
+    int next;
+    
 };
 
 const int DOGS = sizeof(struct dogType);
 
 
-int hash(void * ap){
-  char * c;
-  c = ap; 
-  int tmp = 0;
-  for( int i = 0; i < sizeof(ap) ; i++){
-    if( c[i] >= 97 )  tmp += c[i] - 32; 
-    else tmp += c[i];
-  }
-  return (tmp % MIL) ; 
+int hash(void * ap){  // Hash function 
+    char * c;
+    c = ap; 
+    int tmp = 0;
+    for( int i = 0; i < sizeof(ap) ; i++){
+        if( c[i] >= 97 )  tmp += c[i] - 32; 
+        else tmp += c[i];
+    }
+    return (tmp % MIL) ; 
 }
 
 
 
-void ingresar_registro(void * ap, FILE *f){
- 
-  struct dogType * animal;
-  int hashkey, numread, hashi;
-  
-  animal = ap;
-  hashkey = hash(animal -> nombre) * sizeof(struct dogType);
-
-  struct dogType * tmp;
-  tmp = malloc(sizeof(struct dogType));
-  
-  hashi = hashkey;
-  fseek(f,hashi, SEEK_SET);
-
-  while( numread = fread(tmp, sizeof(struct dogType), 1, f) == 1 )
-    {
-   
-      if(tmp -> next  == -1 )
-	break;
-      hashi = tmp -> next; 
-      fseek(f,hashi, SEEK_SET);
-    }
-
-  printf("numread: %i \n", numread);
-  if( numread == 0 ) {
-    printf("entra no");
-    fseek(f, hashkey ,SEEK_SET); 
-    fwrite(animal, sizeof(struct dogType), 1, f);
-  }
-  else
-    {
-      rewind(f);
-      fseek(f, 0L ,SEEK_END);  // busca el proximo espacio libre
-      long  pos = ftell(f);
-      if(pos < DOGS*1000)
-	{
-	  pos = DOGS * 1000; 
-	  fseek(f,pos, SEEK_SET);
-	}
-      printf("%i pos \n", pos);
-      tmp -> next = pos;  // le asigna el valor de la pos del byte  a next
-      fwrite(animal, sizeof(struct dogType), 1, f);
+void ingresar_registro(void * ap){
     
-      fseek(f, hashi ,SEEK_SET); // vuelve a la pos del padre
-      fwrite(tmp, sizeof(struct dogType), 1, f);
+    FILE * f; 
+    
+    f = fopen("j.dat", "r+");
+    
+    struct dogType * animal;
+    int hashkey, numread = 0 , hashi;
+    
+    animal = ap;
+    hashkey = hash(animal -> nombre) * sizeof(struct dogType); // @hashKey stores the memor position  of the current dogTypeStruct 
+    
+    struct dogType * tmp;
+    tmp = malloc(sizeof(struct dogType));
+    
+    hashi = hashkey;
+    fseek(f,hashi, SEEK_SET);
+    
+    while( numread = fread(tmp, sizeof(struct dogType), 1, f) == 1 && tmp -> next != 0 )
+    {
+        if(tmp -> next  == -1)
+            break;
+        hashi = tmp -> next; 
+        fseek(f,hashi, SEEK_SET);
     }
-  
+    
+    
+    printf("numread: %i \n", numread);
+    
+    if( numread == 0 ) {
+        printf("No esta registrado");
+        fseek(f, hashkey ,SEEK_SET); 
+        fwrite(animal, sizeof(struct dogType), 1, f);
+    }
+    else
+    {
+        fseek(f, 0L ,SEEK_END);  // Look for the next free space 
+        long  pos = ftell(f);
+        if(pos <= DOGS*1000)
+        {
+            pos = DOGS * 1000; 
+            fseek(f,pos, SEEK_SET);
+        }
+        printf("%i pos \n", pos);
+        tmp -> next = pos;  // le asigna el valor de la pos del byte  a next
+        fwrite(animal, sizeof(struct dogType), 1, f);
+        
+        fseek(f, hashi ,SEEK_SET); // vuelve a la pos del padre
+        fwrite(tmp, sizeof(struct dogType), 1, f);
+        rewind(f); 
+    }
+    
+    
+    
+    fclose(f); 
+    
+    
+}
+
+void print_registro(void * ap, int key ){  // key = memory position 
+    struct dogType * animal;
+    animal = ap;
+
+    printf("Numero registro: %i\n\t", key/100);
+    printf("Nombre: %s\t", animal -> nombre);
+    printf("Tipo: %s\t", animal -> tipo) ;
+    printf("Edad: %i\t", animal -> edad);
+    printf("Raza: %s\t", animal -> raza) ;
+    printf("Estatura: %i\t", animal -> estatura);
+    printf("Peso: %.2f\t", animal -> peso) ;
+    printf("Genero: %c\n", animal -> genero);
+    
+}
+
+void get_registro (int * n_reg){ 
+    
+    FILE * f; 
+    int key = 0, hash = *n_reg ; 
+    f = fopen("j.dat", "r+");
+    
+    struct dogType * animal;
+    animal = malloc( sizeof(struct dogType));
+
+    key = hash *DOGS;
+    
+    fseek(f, key , SEEK_SET );
+    fread(animal, sizeof(struct dogType), 1, f); 
+    
+    print_registro( animal,  key); 
+    
+    free(animal);
+    fclose(f); 
 
 }
 
-void ver_registro (int n_reg){
 
-  
-	/* Validar que el número ingresado exista
-         * Guardar el historial de la mascota en un archivo de texto
-	 * y debe abrirse de forma automatica.
-	 * Se puede ver y EDITAR el archivo en el editor de texto.
-	 */
-	/* struct datos *animal; */
-	/* animal = ap; */
-	/* printf("Nombre: %s\n", animal -> nombre) */
-	/* printf("Tipo: %s\n", animal -> tipo) */
-	/* printf("Edad: %i\n", animal -> edad) */
-	/* printf("Raza: %s\n", animal -> raza) */
-	/* printf("Estatura: %i\n", animal -> estatura) */
-	/* printf("Peso: %.2f\n", animal -> peso) */
-	/* printf("Genero: %c\n", animal -> genero) */
+
+void borrar_registro (int * n_reg){
+    FILE * f; 
+    int key = 0, hash = * n_reg  ; 
+    char cero = 0b0000;
+    f = fopen("j.dat", "r+");
+    
+    struct dogType * animal;
+    animal = malloc( sizeof(struct dogType));
+    
+    key = hash * DOGS; 
+    
+    printf("%i ", key);
+    
+    fseek(f, key, SEEK_SET); 
+    fread(animal, sizeof(struct dogType), 1 ,f );
+    
+    if(animal ->  next == -1 ){
+        
+
+        fseek(f, key, SEEK_SET); 
+        fwrite(&cero, 1, DOGS, f);   // Revisar buscar ultimo espacio libre
+        
+    }else{
+        int keytmp = animal -> next; 
+        struct dogType * hijo;
+        
+        hijo = malloc( sizeof(struct dogType));
+        
+        
+        printf(" Hijo pos %i", keytmp);
+        
+        fseek(f, keytmp, SEEK_SET);
+        fread(hijo, sizeof(struct dogType), 1 ,f );
+        
+        fseek(f, keytmp, SEEK_SET);
+        fwrite(&cero, 1, DOGS, f);
+        
+        fseek(f, key, SEEK_SET);
+        fwrite(hijo, DOGS,1, f);
+        
+        printf(" Mira aqui %i", hijo -> next);
+    }
+    free(animal);
+    
+    fclose(f);
+    
 }
 
-void borrar_registro (int n_reg){
-	/* El registro es borrado del archivo, por lo que el
-         * archivo debe reducir su tamaño.
-	 */
+
+int num_reg(){
+    
+    FILE * f; 
+    int key = 0, num_reg = 0  ; 
+    f = fopen("j.dat", "r+");
+    
+    fseek(f,0L, SEEK_END); 
+    num_reg = ftell(f);
+    
+    int cien = 100,count = 0 ; 
+    
+    for(int i = 0; i< 1000; i++){
+        
+        fseek(f, cien*i, SEEK_SET);
+        char c; 
+        fread(&c, 1, 1 ,f);
+        if(c != 0 )
+            count ++;
+    }
+    
+    
+    
+    return (num_reg-100*1000)/100 +  count;
 }
 
-void buscar_registro (char nombre[32]){
-	/* Muestra todos los registros que coincidan completamente con
-	 * el nombre. No se distingue de mayusculas.
-	 */
-
+void buscar_registro (void * ap){
+    
+    FILE * f; 
+    int key = 0 ; 
+    f = fopen("j.dat", "r+");
+    
+    
+    struct dogType * animal;
+    animal = malloc( sizeof(struct dogType));
+    
+    key = hash(ap) * DOGS; 
+    
+    do {  
+        fseek(f, key , SEEK_SET ); 
+        fread(animal, sizeof(struct dogType), 1, f); 
+        
+        print_registro( animal,  key); 
+        
+        key = animal -> next;
+        
+    } while( animal -> next != -1 && animal -> next != 0 ); 
+    
+    free(animal);
+    fclose(f); 
 }
 
 void salir (){
-	printf("Gracias por utilizar nuestra base de datos de animales. \n");
-	printf("Hasta pronto. ");
-	exit(-1);
+    printf("Gracias por utilizar nuestra base de datos de animales. \n");
+    printf("Hasta pronto. ");
+    exit(-1);
 }
 
 
 void menu();
 
 int main (){
-  //menu();
-  FILE * f;
-
-  int i = hash("jimmy");
-  
-  f = fopen("j.dat", "w");
-  fclose(f);
-
-  f = fopen("j.dat", "r+");
-  
-  char n[] = "Jimmy";
-  char s[] = "Alexander";
-
-  fseek(f, 0L ,SEEK_SET);
-  fwrite(n, sizeof(char), sizeof(n), f);
-  fseek(f, (sizeof(n) + 40) ,SEEK_SET);
-  fwrite(s, sizeof(char), sizeof(s), f);
-
-  char j[500];
-  
-  fseek(f, 10 ,SEEK_SET);
-  int num = fread(j, sizeof(char), 5, f);
-
-  //printf("%s %i" , s, strlen(s));
-
-  struct dogType uno  = {"jimmy", "kor", 20, "humn", 170, 47, 'M', -1};
-
-  struct dogType dos  = {"Daniel", "kor", 20, "humn", 170, 47, 'M', -1};
-   struct dogType tres  = {"jimmy", "kor", 20, "humn", 170, 47, 'M', -1};
-
-   //ingresar_registro(&dos,f);
-  ingresar_registro(&uno, f);
-  ingresar_registro(&tres,f);
-  ingresar_registro(&tres,f);
-  ingresar_registro(&tres,f);
-  ingresar_registro(&dos,f);
-
+    FILE * f;
+    
+    int i = hash("jimmy");
+    f = fopen("j.dat", "w");
+    fclose(f);
+    
+    f = fopen("j.dat", "r+");
+    
+    printf("%i ", ftell(f)); 
+    
+    
+    
+    struct dogType uno  = {"Jimmy", "kor", 20, "humn", 170, 47, 'M', -1};
+    
+    struct dogType dos  = {"Daniel", "kor", 20, "humn", 170, 47, 'M', -1};
+    struct dogType tres  = {"jImmy", "kor", 20, "humn", 170, 47, 'M', -1};
+    
+    fclose(f);
+    ingresar_registro(&uno);
+    ingresar_registro(&tres);
+    ingresar_registro(&tres);
+    ingresar_registro(&tres);
+    ingresar_registro(&dos);
+    
+    
+    struct dogType * animal;
+    animal = malloc(sizeof(struct dogType));
+    
+    char nombre[] = "Jimmy";
+    buscar_registro(nombre); 
+    menu();
+    
 }
 
 
 
 
 void menu (){
-  int n_reg;
-  char opcion;
-  struct dogType * animal;
-  
-  printf("Bienvenido a la base de datos de animales.\n Seleccione una opcion a continuacion: ");
-  printf("1. Ingresar registro de un nuevo anmimal\n");
-  printf("2. Ver registro de un animal existente\n");
-  printf("3. Borrar registro de un animal\n");
-  printf("4. Buscar registro de un animal existente\n");
-  printf("5. Salir del programa\n");
-
-  scanf("%c", &opcion);
-  
-  switch(opcion) {
-  case '1' :
+    int * n_reg;
+    char opcion;
+    struct dogType * animal;
     
-    animal = malloc(sizeof(struct dogType)); 
-      
-    printf("Ingrese el nombre del animal: \n");
-    scanf("%s ", animal -> nombre);
-    printf("Ingrese el tipo del animal: \n");
-    scanf("%s ", animal -> tipo);
-    printf("Ingrese la edad del animal: \n");
-    scanf("%i ", &animal -> edad);
-    printf("Ingrese la raza del animal: \n");
-    scanf("%s ", animal -> raza);
-    printf("Ingrese la estatura del animal: \n");
-    scanf("%i ", &animal -> estatura);
-    printf("Ingrese el peso del animal: \n");
-    scanf("%f ", &animal -> peso);
-    printf("Ingrese el genero del animal: \n");
-    scanf("%c", &animal -> genero);
-
-    animal -> next = -1 ;
-    // ingresar_registro(animal);
-    free(animal);
+        printf("Bienvenido a la base de datos de animales.\n Seleccione una opcion a continuacion: ");
+    printf("1. Ingresar registro de un nuevo anmimal\n");
+    printf("2. Ver registro de un animal existente\n");
+    printf("3. Borrar registro de un animal\n");
+    printf("4. Buscar registro de un animal existente\n");
+    printf("5. Salir del programa\n");
     
-    printf("Se han ingresado los datos correctamente\n");
-    break;
-  case '2' :
-    printf("Estos son los números de registro existentes: \n");
-    /* Aqui debe imprimir los números de registro */
-    printf("Ingrese el número de registro del animal para ver su historia clinica: \n");
-    scanf("%i ", n_reg);
-    ver_registro(n_reg);
-    break;
-  case '3' :
-    printf("Estos son los números de registro existentes: \n");
-    /* Aqui debe imprimir los números de registro */
-    printf("Ingrese el número de registro del animal a ser eliminado de la base de datos: \n");
-    scanf("%i ", n_reg);
-    borrar_registro(n_reg);
-    break;
-  case '4' :
-    printf("Ingrese el nombre del animal a buscar: \n");
-    char bus_nombre [32];
-    scanf("%s ", bus_nombre);
-    buscar_registro(bus_nombre);
-    break;
-  case '5' :
-    salir();
-    break;
-  default :
-    printf ("Número inválido. Intente de nuevo. \n");
-  }
+    
+    while(1){
+    
+
+    
+    scanf("%c", &opcion);
+        switch(opcion) {
+            case '1' :
+                
+                animal = malloc(sizeof(struct dogType)); 
+                
+                printf("Ingrese el nombre del animal: \n");
+                scanf("%s", animal -> nombre);
+                printf("Ingrese el tipo del animal: \n");
+                scanf("%s", animal -> tipo);
+                printf("Ingrese la edad del animal: \n");
+                scanf("%i", &animal -> edad);
+                printf("Ingrese la raza del animal: \n");
+                scanf("%s", animal -> raza);
+                printf("Ingrese la estatura del animal: \n");
+                scanf("%i", &animal -> estatura);
+                printf("Ingrese el peso del animal: \n");
+                scanf("%f", &animal -> peso);
+                printf("Ingrese el genero del animal: \n");
+                scanf("%c", &animal -> genero);
+                
+                animal -> next = -1 ;
+                ingresar_registro(animal);
+                free(animal);
+                
+                printf("Se han ingresado los datos correctamente\n");
+                break;
+            case '2' :
+                
+                printf("Estos son los números de registro existentes: \n");
+                /* Aqui debe imprimir los números de registro */
+                printf("Ingrese el número de registro del animal para ver su historia clinica: \n");
+                
+                scanf("%i", n_reg);
+                
+                get_registro( n_reg);
+                
+                break;
+            case '3' :
+                printf("Estos son los números de registro existentes: %i \n", num_reg());
+                
+                printf("Ingrese el número de registro del animal a ser eliminado de la base de datos: \n");
+                scanf("%i", n_reg);
+                borrar_registro(n_reg);
+                printf("Registro borrado exitosamente \n");
+                break;
+            case '4' :
+                printf("Ingrese el nombre del animal a buscar: \n");
+                char bus_nombre [32];
+                scanf("%s", bus_nombre);
+                buscar_registro(bus_nombre);
+                break;
+            case '5' :
+                salir();
+                break;
+            default :
+                printf ("Número inválido. Intente de nuevo. \n");
+        }
+    }
 }
