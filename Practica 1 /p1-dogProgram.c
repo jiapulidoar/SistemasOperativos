@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <locale.h>
 
 const int MIL = 1000; 
 
@@ -23,10 +24,10 @@ const int DOGS = sizeof(struct dogType);
 int hash(void * ap){  // Hash function 
     char * c;
     c = ap; 
-    int tmp = 0;
-    for( int i = 0; i < sizeof(ap) ; i++){
+    int tmp = 1;
+    for( int i = 0; i < sizeof(ap) && c[i] !=0 ; i++){
         if( c[i] >= 97 )  tmp += c[i] - 32; 
-        else tmp += c[i];
+        else tmp *= c[i];
     }
     return (tmp % MIL) ; 
 }
@@ -37,7 +38,7 @@ void ingresar_registro(void * ap){
     
     FILE * f; 
     
-    f = fopen("j.dat", "r+");
+    f = fopen("dataDogs.dat", "r+");
     
     struct dogType * animal;
     int hashkey, numread = 0 , hashi;
@@ -60,10 +61,10 @@ void ingresar_registro(void * ap){
     }
     
     
-    printf("numread: %i \n", numread);
+    //printf("numread: %i \n", numread);
     
     if( numread == 0 ) {
-        printf("No esta registrado");
+      //printf("No esta registrado");
         fseek(f, hashkey ,SEEK_SET); 
         fwrite(animal, sizeof(struct dogType), 1, f);
     }
@@ -76,7 +77,7 @@ void ingresar_registro(void * ap){
             pos = DOGS * 1000; 
             fseek(f,pos, SEEK_SET);
         }
-        printf("%i pos \n", pos);
+        //printf("%i pos \n", pos);
         tmp -> next = pos;  // le asigna el valor de la pos del byte  a next
         fwrite(animal, sizeof(struct dogType), 1, f);
         
@@ -98,20 +99,21 @@ void print_registro(void * ap, int key ){  // key = memory position
 
     printf("Numero registro: %i\n\t", key/100);
     printf("Nombre: %s\t", animal -> nombre);
+    printf("hashkey: %i\t", hash(animal -> nombre));
     printf("Tipo: %s\t", animal -> tipo) ;
     printf("Edad: %i\t", animal -> edad);
     printf("Raza: %s\t", animal -> raza) ;
     printf("Estatura: %i\t", animal -> estatura);
     printf("Peso: %.2f\t", animal -> peso) ;
     printf("Genero: %c\n", animal -> genero);
-    
+    printf("Next: %i\n", animal -> next);
 }
 
 void get_registro (int * n_reg){ 
     
     FILE * f; 
     int key = 0, hash = *n_reg ; 
-    f = fopen("j.dat", "r+");
+    f = fopen("dataDogs.dat", "r+");
     
     struct dogType * animal;
     animal = malloc( sizeof(struct dogType));
@@ -134,7 +136,7 @@ void borrar_registro (int * n_reg){
     FILE * f; 
     int key = 0, hash = * n_reg  ; 
     char cero = 0b0000;
-    f = fopen("j.dat", "r+");
+    f = fopen("dataDogs.dat", "r+");
     
     struct dogType * animal;
     animal = malloc( sizeof(struct dogType));
@@ -159,7 +161,7 @@ void borrar_registro (int * n_reg){
         hijo = malloc( sizeof(struct dogType));
         
         
-        printf(" Hijo pos %i", keytmp);
+        //printf(" Hijo pos %i", keytmp);
         
         fseek(f, keytmp, SEEK_SET);
         fread(hijo, sizeof(struct dogType), 1 ,f );
@@ -170,7 +172,7 @@ void borrar_registro (int * n_reg){
         fseek(f, key, SEEK_SET);
         fwrite(hijo, DOGS,1, f);
         
-        printf(" Mira aqui %i", hijo -> next);
+        //printf(" Mira aqui %i", hijo -> next);
     }
     free(animal);
     
@@ -179,11 +181,11 @@ void borrar_registro (int * n_reg){
 }
 
 
-int num_reg(){
+int num_reg(){  // Calcula numero de registros
     
     FILE * f; 
     int key = 0, num_reg = 0  ; 
-    f = fopen("j.dat", "r+");
+    f = fopen("dataDogs.dat", "r+");
     
     fseek(f,0L, SEEK_END); 
     num_reg = ftell(f);
@@ -208,7 +210,7 @@ void buscar_registro (void * ap){
     
     FILE * f; 
     int key = 0 ; 
-    f = fopen("j.dat", "r+");
+    f = fopen("dataDogs.dat", "r+");
     
     
     struct dogType * animal;
@@ -240,13 +242,14 @@ void salir (){
 void menu();
 
 int main (){
+    setlocale(LC_ALL, "");
     FILE * f;
     
     int i = hash("jimmy");
-    f = fopen("j.dat", "w");
-    fclose(f);
+    //f = fopen("dataDogs.dat", "w");
+    //fclose(f);
     
-    f = fopen("j.dat", "r+");
+    f = fopen("dataDogs.dat", "r+");
     
     printf("%i ", ftell(f)); 
     
@@ -256,20 +259,24 @@ int main (){
     
     struct dogType dos  = {"Daniel", "kor", 20, "humn", 170, 47, 'M', -1};
     struct dogType tres  = {"jImmy", "kor", 20, "humn", 170, 47, 'M', -1};
-    
+    /*
     fclose(f);
     ingresar_registro(&uno);
     ingresar_registro(&tres);
     ingresar_registro(&tres);
     ingresar_registro(&tres);
-    ingresar_registro(&dos);
+
+    for(int i =0; i< 1000; i++) 
+      ingresar_registro(&dos);
     
     
     struct dogType * animal;
     animal = malloc(sizeof(struct dogType));
     
     char nombre[] = "jimmy";
-    buscar_registro(nombre); 
+    buscar_registro(nombre);
+
+    */ 
     menu();
     
 }
@@ -278,7 +285,7 @@ int main (){
 
 
 void menu (){
-    int * n_reg;
+  int n_reg;
     char opcion;
     struct dogType * animal;
     
@@ -330,9 +337,8 @@ void menu (){
             /* Aqui debe imprimir los números de registro */
             printf("Ingrese el número de registro del animal para ver su historia clinica: \n");
             
-            scanf("%i%*c", n_reg);
-            
-            get_registro( n_reg);
+            scanf("%i%*c",&n_reg);
+	      get_registro(&n_reg);
             
             printf("Pulse una recla para continuar..................\n");
             
@@ -342,8 +348,8 @@ void menu (){
             printf("Estos son los números de registro existentes: %i \n", num_reg());
             
             printf("Ingrese el número de registro del animal a ser eliminado de la base de datos: \n");
-            scanf("%i", n_reg);
-            borrar_registro(n_reg);
+            scanf("%i", &n_reg);
+            borrar_registro(&n_reg);
             printf("Registro borrado exitosamente \n");
             
             
@@ -356,6 +362,7 @@ void menu (){
             char bus_nombre [32];
             scanf("%s%*c", bus_nombre);
             buscar_registro(bus_nombre);
+
             printf("Pulse una recla para continuar..................\n");
             
             getchar();

@@ -5,6 +5,8 @@
 #include <ctype.h>
 #include <time.h>
 #include <unistd.h>
+#include <locale.h>
+
 
 struct names{
     char nombre[32];
@@ -16,16 +18,16 @@ struct breeds{
     char breed[16];
 };
 struct dogType{
-    int key;
-    int id;
-    char nombre[32];
-    char tipo[32];
+    
+    char nombre [32];
+    char tipo [32];
     int edad;
-    char raza[16];
+    char raza [16];
     int estatura;
     float peso;
-    char sexo;
+    char genero;
     int next;
+    
 };
 
 const int MIL = 1000; 
@@ -34,11 +36,13 @@ const int DOGS = sizeof(struct dogType);
 int hash(void * ap){  // Hash function 
     char * c;
     c = ap; 
-    int tmp = 0;
-    for( int i = 0; i < sizeof(ap) ; i++){
+    int tmp = 1;
+    for( int i = 0; i < sizeof(ap) && c[i] !=0 ; i++){
         if( c[i] >= 97 )  tmp += c[i] - 32; 
-        else tmp += c[i];
+        else tmp *= c[i];
+	printf("%i", "á");
     }
+    printf("%i%s\n",tmp%MIL, c);
     return (tmp % MIL) ; 
 }
 
@@ -46,9 +50,7 @@ void ingresar_registro(void * ap){
     
     FILE * f; 
     
-    f = fopen("dataDogs.dat","r+");
-    if(f == NULL)
-	{perror("No se puede crear o abrir el archivo"); exit(-1);}
+    f = fopen("dataDogs.dat", "r+");
     
     struct dogType * animal;
     int hashkey, numread = 0 , hashi;
@@ -70,60 +72,49 @@ void ingresar_registro(void * ap){
         fseek(f,hashi, SEEK_SET);
     }
     
-    int r;
+    
     //printf("numread: %i \n", numread);
     
     if( numread == 0 ) {
-        //printf("No esta registrado");
+      //printf("No esta registrado");
         fseek(f, hashkey ,SEEK_SET); 
-        r = fwrite(animal, sizeof(struct dogType), 1, f);
-	if(r != 1)
-	{perror("No se puede escribir en el archivo"); exit(-1);}
+        fwrite(animal, sizeof(struct dogType), 1, f);
     }
     else
     {
         fseek(f, 0L ,SEEK_END);  // Look for the next free space 
-        long long pos = ftell(f);
+        long  pos = ftell(f);
         if(pos <= DOGS*1000)
         {
             pos = DOGS * 1000; 
-            int tmp = fseek(f,pos, SEEK_SET);
-            
-            if(tmp = -1 ) perror("Error fseek"); exit(-1);
+            fseek(f,pos, SEEK_SET);
         }
-        printf("%li pos \n", pos);
+        //printf("%i pos \n", pos);
         tmp -> next = pos;  // le asigna el valor de la pos del byte  a next
-        r = fwrite(animal, sizeof(struct dogType), 1, f);
-	if(r != 1)
-	{perror("No se puede escribir en el archivo"); exit(-1);}
+        fwrite(animal, sizeof(struct dogType), 1, f);
         
         fseek(f, hashi ,SEEK_SET); // vuelve a la pos del padre
-        r = fwrite(tmp, sizeof(struct dogType), 1, f);
-	if(r != 1)
-	{perror("No se puede escribir en el archivo"); exit(-1);}
-
+        fwrite(tmp, sizeof(struct dogType), 1, f);
         rewind(f); 
     }
     
     
     
-    r  =fclose(f); 
-    if (r != 0) 
-	{perror("No se puede cerrar el flujo"); exit(-1);}
+    fclose(f); 
+    
     
 }
 
+
 int main(){
-    
-    FILE * f; 
-    
+  setlocale(LC_CTYPE,"Spanish");
+  FILE * f; 
     f = fopen("dataDogs.dat","w+");
     fclose(f);
     printf("¿Cuantos registros aleatorios desea Crear?: ");
     int reg;
     scanf("%i",&reg);
-    struct dogType *perro;
-    perro = malloc(sizeof(struct dogType));
+    
     FILE *apf;
     
     apf = fopen("nombresMascotas.txt","r");
@@ -170,10 +161,17 @@ int main(){
     char raza[16];
     char name[32];
     char tipo[32];
+
+
+    struct dogType dos  = {"Daniel", "kor", 20, "humn", 170, 47, 'M', -1};
+
+    //for(int i =0; i< 1000; i++) 
+    // ingresar_registro(&dos);
     
     //ITERACION RANDOM
     for(int i=0;i<reg;i++){
-        
+        struct dogType *perro;
+	perro = malloc(sizeof(struct dogType));
         //DECLARACION VARIABLES RANDOM
         int nombre = rand() % 1716;
         int tipo = rand() % 4;
@@ -184,15 +182,20 @@ int main(){
         char sexo = "HM"[random () % 2];
         
         //ASIGNACION EN dogType
+
         strncpy(perro->nombre,nombres[nombre].nombre,32);
-        perro->id = 0;
+	//printf("%s\n%i",perro->nombre, i);
+        //perro->id = 0;
         //perro->key = convertir(perro->nombre);
         strncpy(perro->tipo,tipos[tipo].tipo,32);
         perro->edad = edad;
         strncpy(perro->raza,razas[raza].breed,16);
         perro->estatura = estatura;
         perro->peso = peso;
-        perro->sexo = sexo;
+        perro->genero = sexo;
+	perro->next = -1;
         ingresar_registro(perro);
+
+	free(perro);
     }
 }
