@@ -268,7 +268,7 @@ int main (){
     struct dogType * animal;
     animal = malloc(sizeof(struct dogType));
     
-    char nombre[] = "Jimmy";
+    char nombre[] = "jimmy";
     buscar_registro(nombre); 
     menu();
     
@@ -282,7 +282,10 @@ void menu (){
     char opcion;
     struct dogType * animal;
     
-        printf("Bienvenido a la base de datos de animales.\n Seleccione una opcion a continuacion: ");
+    printf("\e[2J\e[H");
+    
+    
+    printf("Bienvenido a la base de datos de animales.\n Seleccione una opcion a continuacion: \n");
     printf("1. Ingresar registro de un nuevo anmimal\n");
     printf("2. Ver registro de un animal existente\n");
     printf("3. Borrar registro de un animal\n");
@@ -290,67 +293,83 @@ void menu (){
     printf("5. Salir del programa\n");
     
     
-    while(1){
-    
-
-    
-    scanf("%c", &opcion);
-        switch(opcion) {
-            case '1' :
-                
-                animal = malloc(sizeof(struct dogType)); 
-                
-                printf("Ingrese el nombre del animal: \n");
-                scanf("%s", animal -> nombre);
-                printf("Ingrese el tipo del animal: \n");
-                scanf("%s", animal -> tipo);
-                printf("Ingrese la edad del animal: \n");
-                scanf("%i", &animal -> edad);
-                printf("Ingrese la raza del animal: \n");
-                scanf("%s", animal -> raza);
-                printf("Ingrese la estatura del animal: \n");
-                scanf("%i", &animal -> estatura);
-                printf("Ingrese el peso del animal: \n");
-                scanf("%f", &animal -> peso);
-                printf("Ingrese el genero del animal: \n");
-                scanf("%c", &animal -> genero);
-                
-                animal -> next = -1 ;
-                ingresar_registro(animal);
-                free(animal);
-                
-                printf("Se han ingresado los datos correctamente\n");
-                break;
-            case '2' :
-                
-                printf("Estos son los números de registro existentes: \n");
-                /* Aqui debe imprimir los números de registro */
-                printf("Ingrese el número de registro del animal para ver su historia clinica: \n");
-                
-                scanf("%i", n_reg);
-                
-                get_registro( n_reg);
-                
-                break;
-            case '3' :
-                printf("Estos son los números de registro existentes: %i \n", num_reg());
-                
-                printf("Ingrese el número de registro del animal a ser eliminado de la base de datos: \n");
-                scanf("%i", n_reg);
-                borrar_registro(n_reg);
-                printf("Registro borrado exitosamente \n");
-                break;
-            case '4' :
-                printf("Ingrese el nombre del animal a buscar: \n");
-                char bus_nombre [32];
-                scanf("%s", bus_nombre);
-                buscar_registro(bus_nombre);
-                break;
-            case '5' :
-                salir();
-                break;
-            default :
-                printf ("Número inválido. Intente de nuevo. \n");
-        }
+    scanf(" %c", &opcion);
+    switch(opcion) {
+        case '1' :
+            
+            animal = malloc(sizeof(struct dogType)); 
+            
+            printf("Ingrese el nombre del animal: \n");
+            scanf("%s", animal -> nombre);
+            printf("Ingrese el tipo del animal: \n");
+            scanf("%s", animal -> tipo);
+            printf("Ingrese la edad del animal: \n");
+            scanf("%i", &animal -> edad);
+            printf("Ingrese la raza del animal: \n");
+            scanf("%s", animal -> raza);
+            printf("Ingrese la estatura del animal: \n");
+            scanf("%i", &animal -> estatura);
+            printf("Ingrese el peso del animal: \n");
+            scanf("%f", &animal -> peso);
+            printf("Ingrese el genero del animal: \n");
+            scanf("%c%*c", &animal -> genero);
+            
+            animal -> next = -1 ;
+            ingresar_registro(animal);
+            free(animal);
+            
+            printf("Se han ingresado los datos correctamente\n");
+            
+            printf("Pulse una recla para continuar..................\n");
+            
+            getchar();
+            break;
+        case '2' :
+            
+            printf("Estos son los números de registro existentes: %i \n", num_reg());
+            /* Aqui debe imprimir los números de registro */
+            printf("Ingrese el número de registro del animal para ver su historia clinica: \n");
+            
+            scanf("%i%*c", n_reg);
+            
+            get_registro( n_reg);
+            
+            printf("Pulse una recla para continuar..................\n");
+            
+            getchar();
+            break;
+        case '3' :
+            printf("Estos son los números de registro existentes: %i \n", num_reg());
+            
+            printf("Ingrese el número de registro del animal a ser eliminado de la base de datos: \n");
+            scanf("%i", n_reg);
+            borrar_registro(n_reg);
+            printf("Registro borrado exitosamente \n");
+            
+            
+            printf("Pulse una recla para continuar..................\n");
+            
+            getchar();
+            break;
+        case '4' :
+            printf("Ingrese el nombre del animal a buscar: \n");
+            char bus_nombre [32];
+            scanf("%s%*c", bus_nombre);
+            buscar_registro(bus_nombre);
+            printf("Pulse una recla para continuar..................\n");
+            
+            getchar();
+            
+            break;
+        case '5' :
+            salir();
+            break;
+        default :
+            printf ("Número inválido. Intente de nuevo. \n");
+        
     }
+    printf("\e[2J\e[H");
+    
+    menu ();
+        
 }

@@ -25,105 +25,29 @@ struct dogType{
     int estatura;
     float peso;
     char sexo;
-    int next;
+    struct dogType * next;
 };
 
-const int MIL = 1000; 
-const int DOGS = sizeof(struct dogType);
-
-int hash(void * ap){  // Hash function 
-    char * c;
-    c = ap; 
-    int tmp = 0;
-    for( int i = 0; i < sizeof(ap) ; i++){
-        if( c[i] >= 97 )  tmp += c[i] - 32; 
-        else tmp += c[i];
-    }
-    return (tmp % MIL) ; 
-}
-
-void ingresar_registro(void * ap){
+void guardar(void *ap){
     
-    FILE * f; 
-    
-    f = fopen("dataDogs.dat","r+");
-    if(f == NULL)
-	{perror("No se puede crear o abrir el archivo"); exit(-1);}
-    
-    struct dogType * animal;
-    int hashkey, numread = 0 , hashi;
-    
-    animal = ap;
-    hashkey = hash(animal -> nombre) * sizeof(struct dogType); // @hashKey stores the memor position  of the current dogTypeStruct 
-    
-    struct dogType * tmp;
-    tmp = malloc(sizeof(struct dogType));
-    
-    hashi = hashkey;
-    fseek(f,hashi, SEEK_SET);
-    
-    while( numread = fread(tmp, sizeof(struct dogType), 1, f) == 1 && tmp -> next != 0 )
-    {
-        if(tmp -> next  == -1)
-            break;
-        hashi = tmp -> next; 
-        fseek(f,hashi, SEEK_SET);
-    }
-    
+    FILE *apf;
     int r;
-    //printf("numread: %i \n", numread);
-    
-    if( numread == 0 ) {
-        //printf("No esta registrado");
-        fseek(f, hashkey ,SEEK_SET); 
-        r = fwrite(animal, sizeof(struct dogType), 1, f);
-	if(r != 1)
-	{perror("No se puede escribir en el archivo"); exit(-1);}
-    }
-    else
-    {
-        fseek(f, 0L ,SEEK_END);  // Look for the next free space 
-        long long pos = ftell(f);
-        if(pos <= DOGS*1000)
-        {
-            pos = DOGS * 1000; 
-            int tmp = fseek(f,pos, SEEK_SET);
-            
-            if(tmp = -1 ) perror("Error fseek"); exit(-1);
-        }
-        printf("%li pos \n", pos);
-        tmp -> next = pos;  // le asigna el valor de la pos del byte  a next
-        r = fwrite(animal, sizeof(struct dogType), 1, f);
-	if(r != 1)
-	{perror("No se puede escribir en el archivo"); exit(-1);}
-        
-        fseek(f, hashi ,SEEK_SET); // vuelve a la pos del padre
-        r = fwrite(tmp, sizeof(struct dogType), 1, f);
-	if(r != 1)
-	{perror("No se puede escribir en el archivo"); exit(-1);}
-
-        rewind(f); 
-    }
-    
-    
-    
-    r  =fclose(f); 
-    if (r != 0) 
-	{perror("No se puede cerrar el flujo"); exit(-1);}
-    
-}
+    apf = fopen("dataDogs.dat","a+");
+    if(apf == NULL){perror("No se puede crear o abrir el archivo"); exit(-1);}
+    r = fwrite(ap,sizeof(struct dogType),1,apf);
+    if(r != 1){perror("No se puede escribir en el archivo"); exit(-1);}
+    r = fclose(apf);
+    if (r != 0) {perror("No se puede cerrar el flujo"); exit(-1);}
+};
 
 int main(){
     
-    FILE * f; 
-    
-    f = fopen("dataDogs.dat","w+");
-    fclose(f);
     printf("¿Cuantos registros aleatorios desea Crear?: ");
     int reg;
     scanf("%i",&reg);
     struct dogType *perro;
     perro = malloc(sizeof(struct dogType));
+    int count = 0;
     FILE *apf;
     
     apf = fopen("nombresMascotas.txt","r");
@@ -131,7 +55,6 @@ int main(){
         perror("Can't open petnames file stream");
         exit(-1);
     }
-
     int s,u;
     struct names nombres[1716];
     for(s=0;s<1716;s++){
@@ -142,7 +65,6 @@ int main(){
             }
         }
     }
-
     apf = fopen("razas.txt","r");
     if (apf == NULL) {
         perror("Can't open breeds file stream");
@@ -157,7 +79,6 @@ int main(){
             }
         }
     }
-
     struct types tipos[4];
     strncpy(tipos[0].tipo,"Perro",32); for (u=0;u<32;u++){ if(tipos[0].tipo[u] == '\n'){tipos[0].tipo[u] = ' ';}}
     strncpy(tipos[1].tipo,"Gato",32); for (u=0;u<32;u++){ if(tipos[1].tipo[u] == '\n'){tipos[1].tipo[u] = ' ';}}
@@ -193,6 +114,6 @@ int main(){
         perro->estatura = estatura;
         perro->peso = peso;
         perro->sexo = sexo;
-        ingresar_registro(perro);
+        guardar(perro);
     }
 }
