@@ -37,12 +37,11 @@ int hash(void * ap){  // Hash function
     char * c;
     c = ap; 
     int tmp = 1;
-    for( int i = 0; i < sizeof(ap) && c[i] !=0 ; i++){
-        if( c[i] >= 97 )  tmp += c[i] - 32; 
-        else tmp *= c[i];
-	printf("%i", "á");
+    for( int i = 0; i < sizeof(ap) && c[i] >0  ; i++){
+        if( c[i] >= 97 )  tmp += (c[i] - 32); 
+        else tmp += c[i];
     }
-    printf("%i%s\n",tmp%MIL, c);
+    printf("&&%s&& %i\n",c, tmp);
     return (tmp % MIL) ; 
 }
 
@@ -129,7 +128,7 @@ int main(){
         fgets(nombres[s].nombre,32,apf);
         for (u=0;u<32;u++){         //Se mira si los nombres tienen saltos de línea
             if(nombres[s].nombre[u] == '\n'){
-                nombres[s].nombre[u] = ' ';
+                nombres[s].nombre[u] = '\0';
             }
         }
     }

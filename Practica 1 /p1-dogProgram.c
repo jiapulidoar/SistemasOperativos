@@ -2,8 +2,19 @@
 #include <stdlib.h>
 #include <string.h>
 #include <locale.h>
-
+#include <ctype.h>
 const int MIL = 1000; 
+
+char* strlwr(char* s)
+{
+    char* tmp = s;
+
+    for (;*tmp;++tmp) {
+        *tmp = tolower((unsigned char) *tmp);
+    }
+
+    return s;
+}
 
 struct dogType{
     
@@ -25,10 +36,11 @@ int hash(void * ap){  // Hash function
     char * c;
     c = ap; 
     int tmp = 1;
-    for( int i = 0; i < sizeof(ap) && c[i] !=0 ; i++){
-        if( c[i] >= 97 )  tmp += c[i] - 32; 
-        else tmp *= c[i];
+    for( int i = 0; i < sizeof(ap) && c[i] > 0 ; i++){
+        if( c[i] >= 97 )  tmp += (c[i] - 32); 
+        else tmp += c[i];
     }
+   // printf("$$$%s$$$ %i \n",c, tmp);
     return (tmp % MIL) ; 
 }
 
@@ -99,7 +111,7 @@ void print_registro(void * ap, int key ){  // key = memory position
 
     printf("Numero registro: %i\n\t", key/100);
     printf("Nombre: %s\t", animal -> nombre);
-    printf("hashkey: %i\t", hash(animal -> nombre));
+    printf("hashkey: %i  \t", hash(animal -> nombre));
     printf("Tipo: %s\t", animal -> tipo) ;
     printf("Edad: %i\t", animal -> edad);
     printf("Raza: %s\t", animal -> raza) ;
@@ -212,7 +224,7 @@ void buscar_registro (void * ap){
     int key = 0 ; 
     f = fopen("dataDogs.dat", "r+");
     
-    
+    int bool = 0;
     struct dogType * animal;
     animal = malloc( sizeof(struct dogType));
     
@@ -221,13 +233,26 @@ void buscar_registro (void * ap){
     do {  
         fseek(f, key , SEEK_SET ); 
         fread(animal, sizeof(struct dogType), 1, f); 
-        
-        print_registro( animal,  key); 
+
+       
+	//printf("%i #%s#%s# \n",  strcmp(ap,animal -> nombre), ap, animal ->nombre ); 
+
+	char  tmp1[32]   , tmp2[32] ;
+	strcpy(tmp1, ap);
+	strcpy(tmp2, animal -> nombre); 
+	if( strcmp( strlwr(tmp1) ,strlwr(tmp2)) == 0 ) {
+        	print_registro( animal,  key); 
+		bool = 1;
+	}
         
         key = animal -> next;
         
     } while( animal -> next != -1 && animal -> next != 0 ); 
-    
+	
+    if(!bool){
+	printf("Lo sentimos pero %s no arroja ningún resultado.\n", ap);
+	}    
+
     free(animal);
     fclose(f); 
 }
