@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <locale.h>
 
+long long pos[1000]; 
 
 struct names{
     char nombre[32];
@@ -41,7 +42,7 @@ int hash(void * ap){  // Hash function
         if( c[i] >= 97 )  tmp += (c[i] - 32); 
         else tmp += c[i];
     }
-    printf("&&%s&& %i\n",c, tmp);
+    //printf("&&%s&& %i\n",c, tmp);
     return (tmp % MIL) ; 
 }
 
@@ -62,38 +63,43 @@ void ingresar_registro(void * ap){
     
     hashi = hashkey;
     fseek(f,hashi, SEEK_SET);
+ 
+
+    numread = fread(tmp, sizeof(struct dogType), 1, f); 
     
-    while( numread = fread(tmp, sizeof(struct dogType), 1, f) == 1 && tmp -> next != 0 )
-    {
-        if(tmp -> next  == -1)
-            break;
-        hashi = tmp -> next; 
-        fseek(f,hashi, SEEK_SET);
-    }
-    
-    
-    //printf("numread: %i \n", numread);
-    
-    if( numread == 0 ) {
-      //printf("No esta registrado");
-        fseek(f, hashkey ,SEEK_SET); 
+    if( pos[ hash(animal -> nombre)] == 0) {
+      //printf("No esta registrado %s %i \n", animal -> nombre, hash(animal -> nombre));
+        fseek(f, hashkey ,SEEK_SET);
+	pos[hash(animal -> nombre)] = hashkey; 
         fwrite(animal, sizeof(struct dogType), 1, f);
     }
     else
     {
+      
         fseek(f, 0L ,SEEK_END);  // Look for the next free space 
-        long  pos = ftell(f);
-        if(pos <= DOGS*1000)
+        long long  postmp = ftell(f);
+        if(postmp <= DOGS*1000)
         {
-            pos = DOGS * 1000; 
-            fseek(f,pos, SEEK_SET);
+            postmp = DOGS * 1000; 
+            fseek(f,postmp, SEEK_SET);
         }
-        //printf("%i pos \n", pos);
-        tmp -> next = pos;  // le asigna el valor de la pos del byte  a next
+        
         fwrite(animal, sizeof(struct dogType), 1, f);
         
-        fseek(f, hashi ,SEEK_SET); // vuelve a la pos del padre
-        fwrite(tmp, sizeof(struct dogType), 1, f);
+        fseek(f, pos[hash(animal -> nombre)] ,SEEK_SET); // va a la pos del padre
+
+	struct dogType * padre;
+	padre = malloc(sizeof(struct dogType));
+
+	fread(padre, sizeof(struct dogType), 1, f);
+	padre -> next = postmp;  // le asigna el valor de la pos del byte  a next
+
+	fseek(f, pos[hash(animal -> nombre)] ,SEEK_SET); // va a la pos del padre
+        fwrite(padre, sizeof(struct dogType), 1, f);
+
+	
+	pos[hash(animal -> nombre)] = postmp;
+	//printf("%i pos %s \n", pos[hash(animal -> nombre)], animal -> nombre );
         rewind(f); 
     }
     
