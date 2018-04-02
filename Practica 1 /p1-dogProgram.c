@@ -144,7 +144,7 @@ void get_registro (int * n_reg){
 
 
 
-void borrar_registro (int * n_reg){
+int borrar_registro (int * n_reg){
     FILE * f; 
     int key = 0, hash = * n_reg  ; 
     char cero = 0b0000;
@@ -159,6 +159,15 @@ void borrar_registro (int * n_reg){
     
     fseek(f, key, SEEK_SET); 
     fread(animal, sizeof(struct dogType), 1 ,f );
+
+    char c; 
+    printf("Seguro desea borrar a:");
+    print_registro(animal, key);
+    printf("Confirme Y/N \n");
+    scanf("%*c%c",&c );
+
+    if(c == 'n' || c == 'N') return 0; 
+
     
     if(animal ->  next == -1 ){
         
@@ -189,7 +198,7 @@ void borrar_registro (int * n_reg){
     free(animal);
     
     fclose(f);
-    
+    return 1;
 }
 
 
@@ -374,12 +383,15 @@ void menu (){
             
             printf("Ingrese el número de registro del animal a ser eliminado de la base de datos: \n");
             scanf("%i", &n_reg);
-            borrar_registro(&n_reg);
-            printf("Registro borrado exitosamente \n");
-            
+            int r = borrar_registro(&n_reg);
+
+	    if(r == 1)
+	      printf("Registro borrado exitosamente \n");
+	    else
+	      printf("No se borro el registo.\n"); 
             
             printf("Pulse una recla para continuar..................\n");
-            
+            scanf("%*c");
             getchar();
             break;
         case '4' :
@@ -394,6 +406,8 @@ void menu (){
             
             break;
         case '5' :
+	  printf("Seguro desea Salir?, pulse una tecla para continuar...\n");
+	  getchar();
             salir();
             break;
         default :
